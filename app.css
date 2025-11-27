@@ -1,0 +1,157 @@
+ /* ---------- GLOBAL LAYOUT ---------- */
+ * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+ }
+head
+body {
+  background: linear-gradient(135deg, #ffe3f3, #ffd6ea, #fff0f8);
+  color: #333;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* ---------- CONTAINERS ---------- */
+.container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* ---------- HEADINGS ---------- */
+h1, h2, h3 {
+  color: #e6007e;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+p.small {
+  font-size: 0.95rem;
+  color: #555;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ---------- PANELS ---------- */
+.panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 0 20px rgba(230, 0, 126, 0.1);
+  margin: 1.5rem auto;
+  width: 100%;
+  animation: fadeIn 1s ease;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------- BUTTONS ---------- */
+.btn {
+  background: #e6007e;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 24px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 10px rgba(230, 0, 126, 0.4);
+}
+
+.btn:hover {
+  transform: scale(1.05);
+  background: #bf0065;
+  box-shadow: 0 0 18px rgba(230, 0, 126, 0.6);
+}
+
+/* Button Column Layout */
+.btn-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+/* ---------- SPARKLE EFFECT ---------- */
+@keyframes sparkle {
+  0%, 100% { opacity: 0.9; transform: translateY(0) scale(1); }
+  50% { opacity: 0.3; transform: translateY(-15px) scale(1.1); }
+}
+
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: sparkle 3s infinite ease-in-out;
+  z-index: 0;
+}
+
+.sparkle:nth-child(1) { top: 15%; left: 10%; animation-delay: 0s; }
+.sparkle:nth-child(2) { top: 40%; left: 25%; animation-delay: 1s; }
+.sparkle:nth-child(3) { top: 60%; left: 75%; animation-delay: 0.5s; }
+.sparkle:nth-child(4) { top: 80%; left: 50%; animation-delay: 1.5s; }
+.sparkle:nth-child(5) { top: 30%; left: 90%; animation-delay: 2s; }
+
+/* ---------- QUIZ OPTION PAGE ---------- */
+#startPage {
+  text-align: center;
+  margin-top: 10vh;
+  animation: fadeIn 1.2s ease;
+}
+
+#quizOptions {
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 0 25px rgba(230, 0, 126, 0.15);
+}
+
+/* ---------- FOOTER / SCORE ---------- */
+#score {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: #b3005b;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 600px) {
+  h1 { font-size: 2rem; }
+  .panel { padding: 1rem; }
+  .btn { width: 80%; }
+}

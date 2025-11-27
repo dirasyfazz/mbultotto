@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Poster Detective (Rubric + PNG Export)</title>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="game.css">
+<link rel="icon" href="data:," />
+
+<style>
+  :root{
+    --bg1:#fff0f6;
+    --bg2:#ffe6f0;
+    --card:#fff;
+    --accent:#ff66b3;
+    --accent-dark:#e6007e;
+    --muted:#6b6b6b;
+    --green:#35b86f;
+    --radius:14px;
+    --shadow: 0 6px 18px rgba(0,0,0,0.08);
+    font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; padding:28px; background: linear-gradient(180deg,var(--bg1),var(--bg2)); color:#222; }
+  .container{ max-width:1100px; margin:0 auto; background:linear-gradient(180deg,#fff,#fffefb); border-radius:18px; padding:20px; box-shadow: var(--shadow); border: 2px solid rgba(230,0,120,0.06); }
+  header{display:flex;align-items:center;gap:16px}
+  h1{margin:0;color:var(--accent-dark);font-size:22px}
+  p.lead{margin:6px 0 16px;color:var(--muted)}
+  .level-nav{display:flex;gap:8px;margin:12px 0 18px;flex-wrap:wrap}
+  .level-btn{ background:linear-gradient(90deg,#ffd6ea,#ffb3dc); border:2px solid rgba(230,0,120,0.12); color:var(--accent-dark); padding:8px 12px;border-radius:999px;font-weight:700;cursor:pointer; }
+  .level-btn.active{box-shadow:0 4px 12px rgba(230,0,120,0.12);transform:translateY(-2px)}
+  .grid{display:grid;gap:14px}
+  .panel{padding:14px;background:var(--card);border-radius:12px;border:1px solid rgba(0,0,0,0.04)}
+  .flex{display:flex;gap:12px;align-items:center}
+  .posters{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .card{ width:240px;min-height:120px;padding:12px;border-radius:12px; background:linear-gradient(180deg,#fff,#fff8fb); box-shadow:0 6px 18px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.03); text-align:left; cursor:grab; }
+  .card p{margin:6px 0;font-size:14px}
+  .card.dragging{opacity:0.5}
+  .drop-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  .drop{ width:300px; min-height:140px; border-radius:12px; padding:12px; background:linear-gradient(180deg,#fff4fb,#fff7fb); border:2px dashed rgba(230,0,120,0.2); text-align:center; }
+  .drop h3{margin:6px 0 10px;color:var(--accent-dark)}
+  .drop.small{width:240px}
+  .hint{font-size:13px;color:var(--muted);margin-top:8px}
+  .btn{ background:linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#fff; border:0; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:800; box-shadow:0 6px 18px rgba(230,0,120,0.12) }
+  .ghost{opacity:0.3}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .sliderWrap{padding:8px 12px;border-radius:10px;background:#fff0f6;border:1px dashed rgba(230,0,120,0.12)}
+  input[type="range"]{width:100%}
+  .reasons{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+  .reason{ background:#ffdff0; border-radius:10px; padding:10px 12px; cursor:grab; border:1px solid rgba(230,0,120,0.08); }
+  .reason.dragging{opacity:0.5}
+  .box-justify{min-height:120px;border-radius:10px;padding:10px;background:linear-gradient(180deg,#fff,#fff0f6);border:2px dashed rgba(230,0,120,0.12)}
+  textarea{width:100%;min-height:60px;padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);resize:vertical}
+  .poster-preview{ border-radius:12px; padding:12px; background:linear-gradient(180deg,#fff,#fff8fb); border:2px solid rgba(0,0,0,0.04); width:100%; max-width:420px; margin:10px auto; text-align:center; }
+  .small{font-size:13px;color:var(--muted)}
+  .success{color:var(--green);font-weight:800}
+  footer{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+
+/* Rubric & print styles */
+.rubric-panel{ margin-top:14px; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.rubric-table{ width:100%; border-collapse:collapse; margin-top:10px; }
+.rubric-table th, .rubric-table td{ border:1px solid rgba(0,0,0,0.06); padding:8px; text-align:left; background:#fff; }
+.rubric-table th{ background:linear-gradient(90deg,#ffd6ea,#ffb3dc); color:var(--accent-dark) }
+.print-btn{ background:linear-gradient(90deg,#fff,#ffd6ea); color:var(--accent-dark); border:1px solid rgba(230,0,120,0.08); padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700 }
+
+/* hide non-printable on print */
+@media print {
+  body * { visibility:hidden; }
+  #printArea, #printArea * { visibility:visible; }
+  #printArea { position: absolute; left:0; top:0; width:100%; }
+}
+@media (max-width:900px){
+  .drop{width:100%}
+  .card{width:100%}
+}
+</style>
+</head>
+<body>
+  <div class="container" role="application" aria-label="Poster Detective Game with Rubric">
+    <header>
+      <div style="font-size:34px">🎀</div>
+      <div>
+        <h1>Poster Detective — Obligation & Prohibition (Pink)</h1>
+        <p class="lead">Levels: Analyze → Evaluate → Create. Now with a printable teacher rubric and PNG poster export.</p>
+      </div>
+    </header>
+
+    <div class="level-nav" role="tablist" aria-label="Levels">
+      <button class="level-btn active" data-level="1">Level 1: Analyze 🔎</button>
+      <button class="level-btn" data-level="2">Level 2: Evaluate ⚖️</button>
+      <button class="level-btn" data-level="3">Level 3: Create ✨</button>
+      <button id="openRubric" class="level-btn" style="background:linear-gradient(90deg,#ffd6ea,#fff2fb); border:1px solid rgba(230,0,120,0.06)">Teacher Rubric 🧾</button>
+    </div>
+
+   <!-- LEVEL 1 -->
+<div id="level1" class="grid panel">
+  <h2 style="color: var(--accent-dark)">Level 1 — Poster Power & Modal Sort</h2>
+  <p class="small">
+    Drag poster cards to <strong>Strong</strong> / <strong>Medium</strong> / <strong>Weak</strong>.
+    Then drag modal sentences to <strong>Must Not</strong> / <strong>Cannot</strong>.
+    Click <strong>Check Level 1</strong> to grade.
+  </p>
+
+  <div class="row" style="align-items: flex-start;">
+    <!-- Left: Poster Sorting -->
+    <div style="flex: 1;" aria-label="Poster sorting area">
+      <div class="posters" id="posterPool">
+        <div class="card poster-card" draggable="true" data-impact="strong">
+          <h3>🌍 Save Our Planet</h3>
+          <p><em>You must recycle every week. Recycling is required.</em></p>
+        </div>
+        <div class="card poster-card" draggable="true" data-impact="medium">
+          <h3>♻️ Help the Earth</h3>
+          <p><em>Please recycle. Your action helps.</em></p>
+        </div>
+        <div class="card poster-card" draggable="true" data-impact="weak">
+          <h3>🌿 Consider Recycling</h3>
+          <p><em>Recycling is a good idea if you want.</em></p>
+        </div>
+        <div class="card poster-card" draggable="true" data-impact="strong">
+          <h3>🚫 No Littering</h3>
+          <p><em>You must not litter here. Fines apply.</em></p>
+        </div>
+      </div>
+
+      <!-- Poster Drop Zones -->
+      <div class="drop-row" style="margin-top: 14px;">
+        <div class="drop" id="strongDrop">
+          <h3>Strong Impact 💪</h3>
+          <div class="hint small">Forceful words: must, must not</div>
+        </div>
+        <div class="drop" id="mediumDrop">
+          <h3>Medium Impact 🙂</h3>
+          <div class="hint small">Polite requests: please, should</div>
+        </div>
+        <div class="drop" id="weakDrop">
+          <h3>Weak Impact 🤔</h3>
+          <div class="hint small">Suggestions: consider, maybe</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Modal Sort -->
+    <div style="width: 360px;">
+      <div class="panel" style="margin-bottom: 12px;">
+        <h3 style="color: var(--accent-dark)">Modal Sort — Must Not vs Cannot</h3>
+        <p class="small">
+          Drag the sentences to the correct box
+          (<em>forbidden</em> vs <em>impossible</em>).
+        </p>
+
+        <div id="modalPool" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+          <div class="card" draggable="true" data-modal="mustnot">
+            You must not enter after closing.
+          </div>
+          <div class="card" draggable="true" data-modal="cannot">
+            You cannot lift that heavy box alone.
+          </div>
+          <div class="card" draggable="true" data-modal="mustnot">
+            You must not touch the display.
+          </div>
+          <div class="card" draggable="true" data-modal="cannot">
+            You cannot fly without a plane.
+          </div>
+        </div>
+
+        <!-- Modal Drop Zones -->
+        <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+          <div class="drop small" id="mustNotBox">
+            <h3>Must Not 🚫</h3>
+          </div>
+          <div class="drop small" id="cannotBox">
+            <h3>Cannot ❌</h3>
+          </div>
+        </div>
+
+        <!-- Check Button -->
+        <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="btn" id="checkLevel1">Check Level 1</button>
+        </div>
+
+        <div id="level1Result" class="small" style="margin-top: 8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- LEVEL 2 -->
+<div id="level2" class="grid panel" style="display: none;">
+  <h2 style="color: var(--accent-dark);">
+    Level 2 — Politeness & Justification
+  </h2>
+  <p class="small">
+    Slide to rate politeness and drag the best three reasons into the box.
+    Click <strong>Check Level 2</strong>.
+  </p>
+
+  <div class="row" style="align-items: flex-start;">
+    <!-- Left: Politeness Slider -->
+    <div style="flex: 1;">
+      <div class="sliderWrap panel">
+        <h3>Politeness Slider — Which is more polite?</h3>
+        <p class="small">
+          Compare:
+          <strong>"You must not talk!"</strong> vs
+          <strong>"Please, don’t talk."</strong>
+        </p>
+
+        <input id="politeness" type="range" min="1" max="10" value="6" />
+
+        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+          <span class="small">Very impolite</span>
+          <span class="small">Very polite</span>
+        </div>
+
+        <div id="politenessVal" class="small" style="margin-top: 8px;">
+          Current rating: <strong>6</strong>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <button class="btn" id="submitPoliteness">Submit Politeness</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Justification -->
+    <div style="width: 420px;">
+      <div class="panel">
+        <h3 style="color: var(--accent-dark);">
+          Why Clear Signs Matter — Pick Top 3
+        </h3>
+
+        <div class="reasons" id="reasonPool">
+          <div class="reason" draggable="true" data-reason="safety">
+            Prevents accidents / ensures safety
+          </div>
+          <div class="reason" draggable="true" data-reason="clarity">
+            Avoids confusion and misinterpretation
+          </div>
+          <div class="reason" draggable="true" data-reason="compliance">
+            Increases compliance with rules
+          </div>
+          <div class="reason" draggable="true" data-reason="accessibility">
+            Helps non-native speakers & visitors
+          </div>
+          <div class="reason" draggable="true" data-reason="efficiency">
+            Saves time for enforcement
+          </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <div class="box-justify drop" id="justifyBox">
+            <p class="small">Drop your top 3 reasons here</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+          <button class="btn" id="checkLevel2">Check Level 2</button>
+        </div>
+
+        <div id="level2Result" class="small" style="margin-top: 8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+   <!-- LEVEL 3 -->
+<div id="level3" class="grid panel" style="display: none;">
+  <h2 style="color: var(--accent-dark);">
+    Level 3 — Create & Publish
+  </h2>
+  <p class="small">
+    Create slogans and classroom rules; generate a poster preview.
+    Use <strong>Save Poster (PNG)</strong> to export.
+  </p>
+
+  <div
+    style="
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 12px;
+      align-items: start;
+    "
+  >
+    <!-- Left: Input Section -->
+    <div>
+      <div class="panel">
+        <h3>Obligation Slogan (Q27)</h3>
+        <input
+          id="sloganOb"
+          placeholder="e.g., You must save water!"
+          style="
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+          "
+        />
+
+        <h3 style="margin-top: 12px;">Prohibition Slogan (Q28)</h3>
+        <input
+          id="sloganPro"
+          placeholder="e.g., Don’t throw litter!"
+          style="
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+          "
+        />
+
+        <h3 style="margin-top: 12px;">Three Classroom Rules (Q29)</h3>
+        <textarea
+          id="rule1"
+          placeholder="Rule 1: You must..."
+        ></textarea>
+        <textarea
+          id="rule2"
+          placeholder="Rule 2: You must not..."
+        ></textarea>
+        <textarea
+          id="rule3"
+          placeholder="Rule 3: You must / must not..."
+        ></textarea>
+
+        <div
+          style="
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+          "
+        >
+          <button class="btn" id="generatePoster">
+            Generate Poster Preview
+          </button>
+        </div>
+
+        <div id="createResult" class="small" style="margin-top: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Right: Poster Preview -->
+    <div>
+      <div class="panel" id="posterPreviewPanel">
+        <h3 style="color: var(--accent-dark);">Poster Preview</h3>
+        <div
+          id="posterCanvas"
+          style="
+            border: 1px dashed rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 260px;
+            background: #f9fff9;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #333;
+          "
+        >
+          <p class="small" style="color: #777;">
+            Poster preview will appear here after clicking
+            <strong>Generate Poster Preview</strong>.
+          </p>
+        </div>
+
+        <div
+          style="
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+          "
+        >
+          <button class="btn" id="savePoster">Save Poster (PNG)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        </div>
+
+        <div>
+          <div class="panel" style="text-align:center">
+            <h3 style="color:var(--accent-dark)">Poster Preview (Q30)</h3>
+            <div id="posterPreview" class="poster-preview">
+              <h2 id="posterTitle" style="margin:6px 0;color:var(--accent-dark)">Your Poster</h2>
+              <div id="posterBody" style="min-height:120px">
+                <p class="small">Enter slogans and rules to preview your interactive poster here.</p>
+              </div>
+              <div style="margin-top:8px">
+                <button class="btn" id="downloadPoster">📸 Save Poster (PNG)</button>
+              </div>
+            </div>
+            <div class="small" style="margin-top:8px">Tip: include both obligation and prohibition clearly on your poster.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Teacher Rubric Modal / Print -->
+    <div style="margin-top:14px" class="panel">
+      <div class="rubric-panel">
+        <div>
+          <strong>Quick Teacher Actions:</strong>
+          <button id="openRubricPanel" class="print-btn">Open Printable Rubric</button>
+          <button id="autoFillRubric" class="print-btn">Auto-Fill with Scores</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="printRubricBtn" class="print-btn">Print Rubric</button>
+          <button id="downloadAllData" class="print-btn">Export Student Data (CSV)</button>
+        </div>
+      </div>
+
+      <!-- Hidden printable area for CSS print -->
+      <div id="printArea" style="display:none;">
+        <h2 style="color:var(--accent-dark)">Teacher Scoring Rubric — Poster Detective</h2>
+        <p class="small">Use this sheet to record scores for Q21–Q30. Edit scores before printing if needed.</p>
+        <table class="rubric-table" style="width:100%;margin-top:12px">
+          <thead>
+            <tr><th>Criteria</th><th>Skill Focus</th><th>Max Score</th><th>Score</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Level 1 — Analyze & Compare</td><td>Analyze word choice & modal meaning (Q21–23)</td><td>10</td><td><input id="rubricScore1" type="number" min="0" max="10" value="0" style="width:60px" /></td><td><input id="rubricNote1" style="width:100%" /></td></tr>
+            <tr><td>Level 2 — Evaluate</td><td>Politeness, justification (Q24–26)</td><td>10</td><td><input id="rubricScore2" type="number" min="0" max="10" value="0" style="width:60px" /></td><td><input id="rubricNote2" style="width:100%" /></td></tr>
+            <tr><td>Level 3 — Create</td><td>Slogan & poster quality (Q27–30)</td><td>10</td><td><input id="rubricScore3" type="number" min="0" max="10" value="0" style="width:60px" /></td><td><input id="rubricNote3" style="width:100%" /></td></tr>
+            <tr><td colspan="2" style="text-align:right;font-weight:800">Total</td><td>30</td><td><input id="rubricTotal" type="number" min="0" max="30" value="0" style="width:60px" /></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      <div class="small">Teacher notes: Auto-fill uses activity checks as approximate guidance. Edit scores before printing. </div>
+      <div>
+        <button class="level-btn" id="resetAll" style="background:linear-gradient(90deg,#fff,#ffd6ea);color:var(--accent-dark);border:1px solid rgba(230,0,120,0.08)">Reset Game</button>
+      </div>
+    </footer>
+  </div>
+
+<!-- Tambahkan baris ini -->
+<script src="game.js"></script>
+</body>
+</html>
+
+<!-- html2canvas (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+/* ---------- Globals for rubric auto-fill ---------- */
+let level1ScoreValue = 0; // 0..5 (we will scale to 10)
+let level2ScoreValue = 0; // 0..4ish scaled
+let level3ScoreValue = 0; // 0..10
+
+/* ---------- Level navigation ---------- */
+document.querySelectorAll('.level-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const lvl = btn.dataset.level;
+    if(lvl){
+      document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));
+      // keep teacher buttons styled separate
+      document.querySelectorAll('.level-btn[data-level]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('level1').style.display = (lvl==='1')?'block':'none';
+      document.getElementById('level2').style.display = (lvl==='2')?'block':'none';
+      document.getElementById('level3').style.display = (lvl==='3')?'block':'none';
+    }
+  });
+});
+
+/* ---------- Drag & Drop helpers (same as before) ---------- */
+function enableDraggables(selector){
+  document.querySelectorAll(selector).forEach(el=>{
+    el.addEventListener('dragstart', (e)=>{
+      el.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', el.dataset.impact || el.dataset.modal || el.dataset.reason || '');
+      e.dataTransfer.setData('text/id', el.outerHTML);
+    });
+    el.addEventListener('dragend', ()=>el.classList.remove('dragging'));
+  });
+}
+enableDraggables('.poster-card');
+enableDraggables('#modalPool .card');
+enableDraggables('#reasonPool .reason');
+
+/* Drops for posters */
+['strongDrop','mediumDrop','weakDrop'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e=> e.preventDefault());
+  el.addEventListener('drop', e=>{
+    e.preventDefault();
+    const dragging = document.querySelector('.poster-card.dragging');
+    if(dragging) el.appendChild(dragging);
+  });
+});
+
+/* Drops for modals */
+['mustNotBox','cannotBox'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e=> e.preventDefault());
+  el.addEventListener('drop', e=>{
+    e.preventDefault();
+    const dragging = document.querySelector('#modalPool .card.dragging');
+    if(dragging) el.appendChild(dragging);
+  });
+});
+
+/* Drops for reasons */
+const justifyBox = document.getElementById('justifyBox');
+justifyBox.addEventListener('dragover', e=> e.preventDefault());
+justifyBox.addEventListener('drop', e=>{
+  e.preventDefault();
+  const dragging = document.querySelector('#reasonPool .reason.dragging');
+  if(dragging){
+    if(justifyBox.querySelectorAll('.reason').length < 3) justifyBox.appendChild(dragging);
+    else alert('Pick only top 3 reasons!');
+  }
+});
+const reasonPool = document.getElementById('reasonPool');
+reasonPool.addEventListener('dragover', e=> e.preventDefault());
+reasonPool.addEventListener('drop', e=>{
+  e.preventDefault();
+  const dragging = document.querySelectorAll('.reason.dragging')[0];
+  if(dragging) reasonPool.appendChild(dragging);
+});
+
+/* Add dragging class toggle for all draggables */
+document.querySelectorAll('#modalPool .card, #reasonPool .reason, .poster-card').forEach(el=>{
+  el.addEventListener('dragstart', ()=>el.classList.add('dragging'));
+  el.addEventListener('dragend', ()=>el.classList.remove('dragging'));
+});
+
+/* ---------- Level 1 Check ---------- */
+document.getElementById('checkLevel1').addEventListener('click', ()=>{
+  const checkPoster = (dropId, expected) => {
+    const drop = document.getElementById(dropId);
+    const cards = Array.from(drop.querySelectorAll('.poster-card'));
+    // empty drop allowed, but to be correct every card that is inside should match expected.
+    return cards.every(c => c.dataset.impact === expected);
+  };
+  const postersOK = checkPoster('strongDrop','strong') && checkPoster('mediumDrop','medium') && checkPoster('weakDrop','weak');
+
+  const mustNotOK = Array.from(document.getElementById('mustNotBox').querySelectorAll('.card')).every(c=>c.dataset.modal==='mustnot') && document.getElementById('mustNotBox').querySelectorAll('.card').length>0;
+  const cannotOK = Array.from(document.getElementById('cannotBox').querySelectorAll('.card')).every(c=>c.dataset.modal==='cannot') && document.getElementById('cannotBox').querySelectorAll('.card').length>0;
+
+  const posterScore = postersOK ? 3 : 0;
+  const modalScore = (mustNotOK?1:0) + (cannotOK?1:0);
+  const total = posterScore + modalScore; // max 5
+  level1ScoreValue = total; // store 0..5
+
+  const res = document.getElementById('level1Result');
+  res.innerHTML = `Level 1 score: <strong>${total}/5</strong>. ` + (total===5 ? `<span class="success">Excellent analysis! 🎉</span>` : `<span class="small">Review wording and modal meanings, then try again.</span>`);
+});
+
+/* ---------- Level 2 ---------- */
+const politeness = document.getElementById('politeness');
+const politenessVal = document.getElementById('politenessVal');
+politeness.addEventListener('input', ()=>politenessVal.innerHTML = `Current rating: <strong>${politeness.value}</strong>`);
+
+/* submit politeness */
+document.getElementById('submitPoliteness').addEventListener('click', ()=>{
+  const val = Number(politeness.value);
+  let message = '';
+  if(val <=4) message = 'You rated it quite impolite — correct: "You must not talk!" is stronger and less polite.';
+  else if(val <=7) message = 'Moderately polite — many will see "Please don’t talk." as more polite.';
+  else message = 'Very polite — good! "Please don’t talk." is polite and effective.';
+  document.getElementById('level2Result').innerHTML = `Politeness rating submitted: <strong>${val}</strong>. ${message}`;
+  // store politeness partial score (0..4)
+  // we'll combine with reason matches to make a 0..10
+  window._politenessValue = val;
+});
+
+/* check reasons */
+document.getElementById('checkLevel2').addEventListener('click', ()=>{
+  const chosen = Array.from(justifyBox.querySelectorAll('.reason')).map(r=>r.dataset.reason);
+  const required = ['safety','clarity','compliance'];
+  const matches = chosen.filter(c => required.includes(c)).length;
+  // compute level2 score: matches (0-3) mapped to up to 7 points, politeness mapped to up to 3 points
+  const matchScore = Math.round((matches/3)*7);
+  const polit = window._politenessValue || Number(politeness.value);
+  const politScore = Math.round(((polit-1)/9)*3); // polit 1..10 -> 0..3
+  const final = Math.min(10, matchScore + politScore);
+  level2ScoreValue = final;
+  const out = document.getElementById('level2Result');
+  out.innerHTML = `You chose ${chosen.length} reason(s). Matches: ${matches}. Level 2 score: <strong>${final}/10</strong>.`;
+});
+
+/* ---------- Level 3 - Create / Poster Preview ---------- */
+document.getElementById('generatePoster').addEventListener('click', ()=>{
+  const ob = document.getElementById('sloganOb').value.trim();
+  const pro = document.getElementById('sloganPro').value.trim();
+  const r1 = document.getElementById('rule1').value.trim();
+  const r2 = document.getElementById('rule2').value.trim();
+  const r3 = document.getElementById('rule3').value.trim();
+
+  if(!ob && !pro && !r1 && !r2 && !r3){
+    document.getElementById('createResult').innerText = 'Please enter at least one slogan or rule to generate the poster.';
+    return;
+  }
+
+  const posterBody = document.getElementById('posterBody');
+  posterBody.innerHTML = '';
+  if(ob) posterBody.innerHTML += `<p style="font-weight:800;color:${'#e6007e'};font-size:18px">${escapeHtml(ob)}</p>`;
+  if(pro) posterBody.innerHTML += `<p style="font-weight:700;color:#ff4da6">${escapeHtml(pro)}</p>`;
+  const rules = [r1,r2,r3].filter(Boolean);
+  if(rules.length){
+    posterBody.innerHTML += '<ul style="text-align:left;margin:8px auto;display:inline-block">';
+    rules.forEach(r=> posterBody.innerHTML += `<li style="margin:6px 0">${escapeHtml(r)}</li>`);
+    posterBody.innerHTML += '</ul>';
+  }
+  // compute level3 score: number of filled fields mapped to 0..10
+  const filled = [ob,pro,r1,r2,r3].filter(Boolean).length;
+  level3ScoreValue = Math.min(10, Math.round((filled/5)*10));
+  document.getElementById('createResult').innerHTML = `<span class="success">Poster preview updated! Level 3 score suggestion: <strong>${level3ScoreValue}/10</strong></span>`;
+});
+
+/* Utility to escape HTML */
+function escapeHtml(s){
+  return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+}
+
+/* ---------- Download Poster (PNG) via html2canvas ---------- */
+document.getElementById('downloadPoster').addEventListener('click', ()=>{
+  const node = document.getElementById('posterPreview');
+  // ensure poster has content
+  html2canvas(node, { scale: 2 }).then(canvas => {
+    canvas.toBlob(function(blob){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'poster_preview.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  }).catch(err => alert('Export failed: '+err));
+});
+</script>
+
+<script>
+/* ---------- Teacher Rubric: Open panel and auto-fill ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  // --- Fallbacks for undefined global score vars ---
+  const getSafeScore = (val) => (typeof val === 'number' ? val : 0)});
+
+  // --- Open rubric panel in a new window ---
+  const openRubricPanel = document.getElementById('openRubricPanel');
+  if (openRubricPanel) {
+    openRubricPanel.addEventListener('click', () => {
+      const w = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+      const html = buildRubricHTML();
+      w.document.write(html);
+      w.document.close();
+    });
+  }
+
+  // --- Auto-fill rubric scores ---
+  const autoFillBtn = document.getElementById('autoFillRubric');
+  if (autoFillBtn) {
+    autoFillBtn.addEventListener('click', () => {
+      const s1 = Math.round((getSafeScore(window.level1ScoreValue) / 5) * 10);
+      const s2 = getSafeScore(window.level2ScoreValue);
+      const s3 = getSafeScore(window.level3ScoreValue);
+
+      document.getElementById('rubricScore1').value = s1;
+      document.getElementById('rubricScore2').value = s2;
+      document.getElementById('rubricScore3').value = s3;
+      document.getElementById('rubricTotal').value = s1 + s2 + s3;
+
+      alert('Rubric auto-filled. Open "Print Rubric" to review and print.');
+    });
+  }
+
+  // --- Print rubric ---
+  const printRubricBtn = document.getElementById('printRubricBtn');
+  if (printRubricBtn) {
+    printRubricBtn.addEventListener('click', () => {
+      const w = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+      const html = buildRubricHTML(true);
+      w.document.write(html);
+      w.document.close();
+      setTimeout(() => w.print(), 400);
+    });
+}
+{<style>
+    <head>
+        <body>
+    <h1>Grading Rubric Summary</h1>
+    <div class="date">
+        **Date:** ${createdAt}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th class="score-col">Score</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Criteria 1</td>
+                <td class="score-col">${s1}</td>
+                <td>${n1}</td>
+            </tr>
+            <tr>
+                <td>Criteria 2</td>
+                <td class="score-col">${s2}</td>
+                <td>${n2}</td>
+            </tr>
+            <tr>
+                <td>Criteria 3</td>
+                <td class="score-col">${s3}</td>
+                <td>${n3}</td>
+            </tr>
+            <tr class="total-row">
+                <td>**TOTAL SCORE**</td>
+                <td class="score-col">**${total}**</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="no-print" style="text-align:center; margin-top:30px; ${printMode ? 'display:none;' : ''}">
+        <a href="index.html"
+            style="display:inline-block;
+                    background:linear-gradient(90deg,#ffd6ea,#fff2fb);
+                    border:1px solid rgba(230,0,120,0.2);
+                    border-radius:12px;
+                    padding:12px 24px;
+                    color:#e6007e;
+                    font-weight:600;
+                    text-decoration:none;
+                    box-shadow:0 0 10px rgba(230,0,126,0.2);
+                    transition:transform 0.2s;">
+            ⬅️ Back to Homepage
+        </a>
+    </div>
+</body>
+</head>
+</style>
+}

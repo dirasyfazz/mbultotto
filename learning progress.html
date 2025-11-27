@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>learning progress</title>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="learning progress.css">
+<link rel="icon" href="data:," />
+
+<body>
+  <header class="topbar">
+    <div class="brand">🎀 Assessment Hub</div>
+    <nav class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="self-assessment.html">Self-Assessment</a>
+      <a href="learning progress.html" aria-current="page">learning progress</a>
+      <a href="game.html">Game</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h1>🌷 Checklist Kemajuan Belajar</h1>
+      <p class="lead">Rate each statement 1 (Not Yet) — 5 (Mastered). Enter your name to export progress to CSV.</p>
+
+      <form id="checklistForm" class="survey" autocomplete="off">
+        <div class="meta">
+          <label class="label-inline">Student name
+            <input id="studentName" name="studentName" type="text" placeholder="Your name (e.g., Totto Gembul)" required>
+          </label>
+          <div class="meta-right">
+            <button type="button" id="showScore" class="btn ghost">Show Score</button>
+            <button type="button" id="exportCSV" class="btn">Export Progress to CSV</button>
+          </div>
+        </div>
+
+        <table class="likert-table" role="table" aria-label="Checklist likert table">
+          <thead>
+            <tr>
+              <th class="qcol">Statement</th>
+              <th>1<br><small>Not Yet</small></th>
+              <th>2</th>
+              <th>3<br><small>Sometimes</small></th>
+              <th>4</th>
+              <th>5<br><small>Mastered</small></th>
+            </tr>
+          </thead>
+          <tbody id="statementsBody">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+
+        <div class="result-row" id="resultRow" aria-live="polite" hidden>
+          <div class="result-box">
+            <strong>Total:</strong> <span id="totalScore">0</span> /
+            <span id="maxScore">100</span>
+            &nbsp;&middot;&nbsp;
+            <strong>Average:</strong> <span id="avgScore">0</span>
+          </div>
+        </div>
+
+        <p class="note">Tip: Answer all statements before exporting for a complete record.</p>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const statements = [
+      // Recognizing (1-8)
+      "I can recognize the text's primary idea.",
+      "I can remember key details that support the main idea.",
+      "I can identify who, what, when, where, and why in the text.",
+      "I can understand word meanings from context.",
+      "I can describe the text's ideas or flow of events.",
+      "Sentences make sense to me when read literally.",
+      "I can identify information that is implied (inference).",
+      "I can identify the author's motivation for writing.",
+      // Applying (9-14)
+      "I can connect details across different sections to form understanding.",
+      "I can compare ideas in this text with another text on the same topic.",
+      "I can answer comprehension questions using text details.",
+      "I can use evidence from the text to support my opinions.",
+      "I can provide a clear summary of the text.",
+      "I can infer conclusions or predict outcomes from the text.",
+      // Reflecting (15-20)
+      "I can relate the text's ideas to my personal experiences.",
+      "I can judge the accuracy or truth of the text's information.",
+      "I can agree or disagree with the author and explain why.",
+      "I can come away with new insights or ideas after reading.",
+      "I can apply the text's lesson or moral to real situations.",
+      "I can reflect on my reading process and identify when I understand or am confused."
+    ];
+
+    // Build table
+    const tbody = document.getElementById('statementsBody');
+    statements.forEach((s, i) => {
+      const id = `c${i+1}`;
+      const tr = document.createElement('tr');
+      const tdq = document.createElement('td');
+      tdq.className = 'qcol';
+      tdq.innerHTML = `<div class="qnum">${i+1}.</div> <div class="qtext">${s}</div>`;
+      tr.appendChild(tdq);
+      for(let v=1; v<=5; v++){
+        const td = document.createElement('td');
+        td.innerHTML = `<input type="radio" name="${id}" value="${v}" aria-label="Rate ${v}" required>`;
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+
+    function collectResponses(prefix='c'){
+      const data = [];
+      for(let i=1;i<=statements.length;i++){
+        const name = `${prefix}${i}`;
+        const radios = document.getElementsByName(name);
+        let value = null;
+        for(const r of radios) if(r.checked) value = r.value;
+        data.push(value === null ? '' : value);
+      }
+      return data;
+    }
+    function validateAllAnswered(arr){ return arr.every(x=> x !== '' && x !== null); }
+    function computeScore(arr){
+      const nums = arr.map(x=> Number(x));
+      const total = nums.reduce((s,n)=> s + (isNaN(n)?0:n), 0);
+      const max = statements.length * 5;
+      const avg = (total / statements.length).toFixed(2);
+      return { total, max, avg };
+    }
+    function getTimestampString(){
+      const d = new Date();
+      const pad = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    }
+
+    document.getElementById('showScore').addEventListener('click', ()=>{
+      const resp = collectResponses();
+      if(!validateAllAnswered(resp)){ alert('Please answer all statements first.'); return; }
+      const {total, max, avg} = computeScore(resp);
+      document.getElementById('totalScore').textContent = total;
+      document.getElementById('maxScore').textContent = max;
+      document.getElementById('avgScore').textContent = avg;
+      document.getElementById('resultRow').hidden = false;
+      document.getElementById('resultRow').scrollIntoView({behavior:'smooth'});
+    });
+
+    document.getElementById('exportCSV').addEventListener('click', ()=>{
+      const nameField = document.getElementById('studentName');
+      const studentName = nameField.value.trim();
+      if(!studentName){ alert('Please enter student name before exporting.'); nameField.focus(); return; }
+      const resp = collectResponses();
+      if(!validateAllAnswered(resp)){ alert('Please answer all statements before exporting.'); return; }
+      const {total, max, avg} = computeScore(resp);
+
+      const rows = [];
+      rows.push(['Student Name', studentName]);
+      rows.push(['Page', 'Learning Progress']);
+      rows.push(['Timestamp', new Date().toLocaleString()]);
+      rows.push([]);
+      rows.push(['Statement #','Statement Text','Response (1-5)']);
+      statements.forEach((s,i)=> rows.push([i+1,s,resp[i]]));
+      rows.push([]);
+      rows.push(['Total', total]);
+      rows.push(['Max', max]);
+      rows.push(['Average', avg]);
+
+      const csvContent = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+      const safeName = studentName.replace(/\s+/g,'_').replace(/[^\w\-]/g,'');
+      const ts = getTimestampString();
+      const filename = `${safeName}_ChecklistLearning_${ts}.csv`;
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

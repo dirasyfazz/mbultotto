@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poster Detective — Pink Quiz Edition</title>
+  <link rel="stylesheet" href="game.css" />
+  <style>
+    /* Sparkle background only */
+    @keyframes sparkle {
+      0%, 100% { opacity: 0.8; transform: translateY(0) scale(1); }
+      50% { opacity: 0.3; transform: translateY(-20px) scale(1.2); }
+    }
+    .sparkle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: sparkle 3s infinite ease-in-out;
+      z-index: 0;
+    }
+    .sparkle:nth-child(1) { top: 15%; left: 10%; animation-delay: 0s; }
+    .sparkle:nth-child(2) { top: 40%; left: 25%; animation-delay: 1s; }
+    .sparkle:nth-child(3) { top: 60%; left: 75%; animation-delay: 0.5s; }
+    .sparkle:nth-child(4) { top: 80%; left: 50%; animation-delay: 1.5s; }
+    .sparkle:nth-child(5) { top: 30%; left: 90%; animation-delay: 2s; }
+
+    /* Pink home/option page */
+    #startPage {
+      text-align: center;
+      margin-top: 10vh;
+      animation: fadeIn 1.2s ease;
+      z-index: 2;
+    }
+    .btn-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn {
+      background: #e6007e;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: 0.3s;
+      box-shadow: 0 0 10px rgba(230, 0, 126, 0.4);
+      width: 230px;
+    }
+    .btn:hover {
+      background: #bf0065;
+      transform: scale(1.05);
+      box-shadow: 0 0 18px rgba(230, 0, 126, 0.5);
+    }
+    #game {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sparkles -->
+  <div class="sparkle"></div>
+  <div class="sparkle"></div>
+  <div class="sparkle"></div>
+  <div class="sparkle"></div>
+  <div class="sparkle"></div>
+
+  <!-- Start Page -->
+  <div id="startPage">
+    <h1 style="color:#e6007e;">✨ Poster Detective ✨</h1>
+    <p class="small">Explore obligation and prohibition posters through fun, interactive quiz questions!</p>
+    <div class="btn-column">
+      <button class="btn" id="startQuiz">Start Quiz 🎮</button>
+      <button class="btn" id="howToPlay">Instructions 📘</button>
+    </div>
+    <div id="instructionsPanel" class="hidden panel" style="max-width:500px;margin:20px auto;">
+      <h2 style="color:#e6007e;">How to Play</h2>
+      <ul style="text-align:left;line-height:1.6;">
+        <li>Read the poster shown above each question.</li>
+        <li>Choose the best answer from four options.</li>
+        <li>Learn how obligation and prohibition are expressed in English.</li>
+        <li>Finish all questions to see your score!</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Game Quiz Section -->
+  <div id="game" class="justify-center flex-column">
+    <div id="poster" class="poster-text"></div>
+    <h2 id="question"></h2>
+    <div id="choices"></div>
+    <button id="next-btn" class="btn">Next</button>
+    <div id="score"></div>
+  </div>
+
+  <script>
+    // --- Quiz Option Page Logic ---
+    const startQuizBtn = document.getElementById("startQuiz");
+    const howToPlayBtn = document.getElementById("howToPlay");
+    const instructionsPanel = document.getElementById("instructionsPanel");
+    const startPage = document.getElementById("startPage");
+    const gameDiv = document.getElementById("game");
+
+    startQuizBtn.addEventListener("click", () => {
+      startPage.style.display = "none";
+      gameDiv.style.display = "block";
+      showQuestion();
+    });
+    howToPlayBtn.addEventListener("click", () => {
+      instructionsPanel.classList.toggle("hidden");
+    });
+
+    // --- Actual Quiz Game ---
+    const quizQuestions = [
+    {
+    poster: `<strong>Poster:</strong><br>"Obligation Meaning" 📘<br><em>Understanding basic rules.</em>`,
+    question: "What does obligation mean in English grammar?",
+    options: [
+      "A. A statement that gives advice.",
+      "B. A rule that tells people what they have to do.",
+      "C. A permission someone can choose to follow.",
+      "D. A polite request to do something."
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Prohibition Meaning" 🚫<br><em>Understanding what is forbidden.</em>`,
+    question: "What does prohibition mean in English grammar?",
+    options: [
+      "A. Giving permission to do something.",
+      "B. Telling people what they must not do.",
+      "C. Asking people to help politely.",
+      "D. Suggesting a good idea."
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Grammar Tip" ✍️<br><em>Modal verbs for obligation.</em>`,
+    question: "Which modal verbs are commonly used to express obligation?",
+    options: [
+      "A. Must, have to, should",
+      "B. Can, may, might",
+      "C. Must not, cannot, may not",
+      "D. Shall, could, would"
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Grammar Tip" 🚷<br><em>Modal verbs for prohibition.</em>`,
+    question: "Which modal verbs are commonly used to express prohibition?",
+    options: [
+      "A. Can, may, might",
+      "B. Must not, cannot, may not",
+      "C. Must, have to, should",
+      "D. Shall, will, would"
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Use of Must" 🧾<br><em>Expressing necessity and rules.</em>`,
+    question: "What is the function of must in obligation sentences?",
+    options: [
+      "A. To show permission",
+      "B. To show necessity or requirement",
+      "C. To give advice politely",
+      "D. To ask questions"
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Use of Must Not" ⛔<br><em>Showing what is forbidden.</em>`,
+    question: "What is the function of must not in prohibition sentences?",
+    options: [
+      "A. To show something is allowed",
+      "B. To express advice",
+      "C. To show something is forbidden",
+      "D. To give permission"
+    ],
+    answer: 2
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Clean Classroom" 🧹<br><em>You must keep the classroom clean.</em>`,
+    question: "What type of expression is it?",
+    options: ["A. Prohibition", "B. Obligation", "C. Suggestion", "D. Permission"],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"No Smoking" 🚭<br><em>Do not smoke in this area.</em>`,
+    question: "What type of expression is it?",
+    options: ["A. Obligation", "B. Suggestion", "C. Prohibition", "D. Request"],
+    answer: 2
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Grammar Reminder" 📖<br><em>Difference between must and should.</em>`,
+    question: "What is the main difference between must and should in expressing obligation?",
+    options: [
+      "A. Must is stronger than should.",
+      "B. Should is stronger than must.",
+      "C. Both have the same meaning.",
+      "D. Must gives permission."
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Grammar Comparison" ⚖️<br><em>Must not vs Should not.</em>`,
+    question: "What is the difference between must not and should not in expressing prohibition?",
+    options: [
+      "A. Must not is a strong rule; should not is a mild suggestion.",
+      "B. Should not is stronger than must not.",
+      "C. Both have the same force.",
+      "D. Must not shows advice, not rules."
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Poster Slogans" 🎯<br><em>Identify obligation and prohibition.</em>`,
+    question: "Match the poster slogan with its category: a) “Don’t run in the hallway.” b) “You must wash your hands.”",
+    options: [
+      "A. (a) Obligation, (b) Prohibition",
+      "B. (a) Prohibition, (b) Obligation",
+      "C. (a) Advice, (b) Permission",
+      "D. (a) Warning, (b) Suggestion"
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Safety First" ⛑️<br><em>You have to wear a helmet.</em>`,
+    question: "What does the expression imply?",
+    options: [
+      "A. It’s optional to wear a helmet.",
+      "B. It’s a strict rule you must follow.",
+      "C. It’s only a suggestion.",
+      "D. It means you may wear one if you like."
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Exam Rules" 📱<br><em>You are not allowed to use mobile phones during exams.</em>`,
+    question: "What does this expression mean?",
+    options: [
+      "A. You must not use mobile phones.",
+      "B. You can use phones carefully.",
+      "C. You are advised to use phones.",
+      "D. You should bring your phone."
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Visitor Rules" 🏢<br><em>All visitors must register and show ID.</em>`,
+    question: "Find two obligation expressions in this text.",
+    options: [
+      "A. Must register, have to show",
+      "B. Must not register, cannot show",
+      "C. Should not show, may not register",
+      "D. Will register, might show"
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Lab Safety" 🧪<br><em>Do not touch the equipment. You must not enter without permission.</em>`,
+    question: "Find two prohibition expressions in this text.",
+    options: [
+      "A. Must not enter, do not touch",
+      "B. Must enter, may touch",
+      "C. Should enter, will touch",
+      "D. May enter, can touch"
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Public Rules" 🏙️<br><em>Clear language is key!</em>`,
+    question: "How are obligation and prohibition commonly shown in public posters?",
+    options: [
+      "A. By long paragraphs explaining the rule",
+      "B. By using simple modal verbs and clear images",
+      "C. By using past tense verbs",
+      "D. By adding stories and dialogues"
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"School Rule" 🎒<br><em>You must do your homework.</em>`,
+    question: "Which of the following shows obligation in a school rule?",
+    options: [
+      "A. You must do your homework.",
+      "B. You may play in the hallway.",
+      "C. You can leave class early.",
+      "D. You might skip the test."
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Swimming Safety" 🏊‍♂️<br><em>Follow pool rules.</em>`,
+    question: "Which of the following shows prohibition in a safety notice?",
+    options: [
+      "A. You have to wear a life jacket.",
+      "B. You can swim anywhere.",
+      "C. Do not dive in shallow water.",
+      "D. You may bring food."
+    ],
+    answer: 2
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"School ID" 🪪<br><em>You must wear your school ID.</em>`,
+    question: "Which sentence changes this obligation into a prohibition?",
+    options: [
+      "A. You should wear your school ID.",
+      "B. You must not forget your school ID.",
+      "C. You don’t need your school ID.",
+      "D. You must not wear your school ID."
+    ],
+    answer: 3
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Zoo Rules" 🐒<br><em>You must put your trash in the bin. You must not feed the animals.</em>`,
+    question: "Which sentence shows prohibition?",
+    options: [
+      "A. You must put your trash in the bin.",
+      "B. You must not feed the animals.",
+      "C. Both are prohibition.",
+      "D. Neither shows prohibition."
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Word Choice" 🗣️<br><em>Language shapes actions.</em>`,
+    question: "Why does the choice of words in obligation posters affect behavior?",
+    options: [
+      "A. Because strong words like must show rules clearly.",
+      "B. Because long sentences confuse readers.",
+      "C. Because posters must use past tense verbs.",
+      "D. Because polite language is never effective."
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Modal Difference" 📚<br><em>Must not vs Cannot.</em>`,
+    question: "What is the difference between must not and cannot?",
+    options: [
+      "A. Must not means forbidden; cannot means impossible.",
+      "B. Cannot means forbidden; must not means suggestion.",
+      "C. Both have the same meaning.",
+      "D. Both show possibility."
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Recycling Message" ♻️<br><em>You should recycle vs You must recycle.</em>`,
+    question: "Why is 'You should recycle' less forceful than 'You must recycle'?",
+    options: [
+      "A. Because should expresses advice, not rule.",
+      "B. Because should is a command.",
+      "C. Because must means possibility.",
+      "D. Because should and must are identical."
+    ],
+    answer: 0
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Classroom Manners" 🤫<br><em>Politeness matters.</em>`,
+    question: "Which is more polite?",
+    options: [
+      "A. You must not talk!",
+      "B. Please don’t talk.",
+      "C. Don’t you talk!",
+      "D. Stop talking!"
+    ],
+    answer: 1
+  },
+  {
+    poster: `<strong>Poster:</strong><br>"Public Signs" 🚷<br><em>Be clear and simple.</em>`,
+    question: "Why are clear obligation and prohibition expressions important in public places?",
+    options: [
+      "A. To make posters longer",
+      "B. To confuse readers",
+      "C. To help people understand rules easily",
+      "D. To decorate walls"
+    ],
+    answer: 2
+    },
+    {
+    poster: `<strong>Poster:</strong><br>"Language Awareness" 🎓<br><em>Understanding modals.</em>`,
+    question: "Why might students misunderstand obligation and prohibition signs?",
+    options: [
+      "A. Because they are written in English and students may misinterpret modals.",
+      "B. Because they always use long sentences.",
+      "C. Because they never use verbs.",
+      "D. Because they are not translated."
+    ],
+    answer: 0
+    },
+    {
+    poster: `<strong>Poster:</strong><br>"Go Green" 🌿<br><em>You must save water.</em>`,
+    question: "Which slogan best shows obligation for environmental protection?",
+    options: [
+      "A. Do not plant trees.",
+      "B. You must save water.",
+      "C. You may throw trash anywhere.",
+      "D. You can waste energy."
+    ],
+    answer: 1
+    },
+    {
+    poster: `<strong>Poster:</strong><br>"Clean School" 🧽<br><em>Keep it tidy!</em>`,
+    question: "Which slogan best shows prohibition for school cleanliness?",
+    options: [
+      "A. Keep your desk clean!",
+      "B. Don’t throw litter on the floor!",
+      "C. You should study harder!",
+      "D. You have to bring your book!"
+    ],
+    answer: 1
+    },
+    {
+    poster: `<strong>Poster:</strong><br>"Classroom Rules" 📏<br><em>Behavior expectations.</em>`,
+    question: "Which set of classroom rules includes both obligation and prohibition?",
+    options: [
+      "A. You must be late. You can sleep in class.",
+      "B. You must wear your uniform. You must not cheat.",
+      "C. You should not study. You may talk loudly.",
+      "D. You have to skip homework. You may copy others."
+    ],
+    answer: 1
+    },
+    {
+    poster: `<strong>Poster:</strong><br>"Study Motivation" 📚<br><em>Work hard and stay disciplined!</em>`,
+    question: "Which poster combines obligation and prohibition correctly?",
+    options: [
+      "A. You can play during exams. Don’t write your name.",
+      "B. You must study hard. Don’t be lazy!",
+      "C. You may skip school. Don’t bring books.",
+      "D. You have to cheat. Don’t be honest."
+    ],
+    answer: 1
+    },
+    {
+        poster: `<strong>Poster:</strong><br>"Obligation Meaning" 📘<br><em>Understanding basic rules.</em>`,
+        question: "What does obligation mean in English grammar?",
+        options: [
+          "A. A statement that gives advice.",
+          "B. A rule that tells people what they have to do.",
+          "C. A permission someone can choose to follow.",
+          "D. A polite request to do something."
+        ],
+        answer: 1
+      },
+      {
+        poster: `<strong>Poster:</strong><br>"Prohibition Meaning" 🚫<br><em>Understanding what is forbidden.</em>`,
+        question: "What does prohibition mean in English grammar?",
+        options: [
+          "A. Giving permission to do something.",
+          "B. Telling people what they must not do.",
+          "C. Asking people to help politely.",
+          "D. Suggesting a good idea."
+        ],
+        answer: 1
+      },
+      {
+        poster: `<strong>Poster:</strong><br>"Go Green" 🌿<br><em>You must save water.</em>`,
+        question: "Which slogan best shows obligation for environmental protection?",
+        options: [
+          "A. Do not plant trees.",
+          "B. You must save water.",
+          "C. You may throw trash anywhere.",
+          "D. You can waste energy."
+        ],
+        answer: 1
+      },
+      {
+        poster: `<strong>Poster:</strong><br>"Clean School" 🧽<br><em>Keep it tidy!</em>`,
+        question: "Which slogan best shows prohibition for school cleanliness?",
+        options: [
+          "A. Keep your desk clean!",
+          "B. Don’t throw litter on the floor!",
+          "C. You should study harder!",
+          "D. You have to bring your book!"
+        ],
+        answer: 1
+      }
+    ];
+
+    const questionEl = document.getElementById("question");
+    const choicesEl = document.getElementById("choices");
+    const posterEl = document.getElementById("poster");
+    const nextBtn = document.getElementById("next-btn");
+    const scoreEl = document.getElementById("score");
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    function showQuestion() {
+      const q = quizQuestions[currentQuestion];
+      posterEl.innerHTML = q.poster;
+      questionEl.textContent = q.question;
+      choicesEl.innerHTML = "";
+      nextBtn.style.display = "none";
+      scoreEl.textContent = "";
+
+      q.options.forEach((option, i) => {
+        const btn = document.createElement("div");
+        btn.classList.add("choice-container");
+        btn.textContent = option;
+        btn.onclick = () => selectAnswer(i);
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(index) {
+      const q = quizQuestions[currentQuestion];
+      const allChoices = document.querySelectorAll(".choice-container");
+
+      allChoices.forEach((choice, i) => {
+        if (i === q.answer) {
+          choice.classList.add("correct");
+        } else if (i === index) {
+          choice.classList.add("incorrect");
+        }
+        choice.style.pointerEvents = "none";
+      });
+
+      if (index === q.answer) score++;
+      nextBtn.style.display = "inline-block";
+    }
+
+    nextBtn.onclick = () => {
+      currentQuestion++;
+      if (currentQuestion < quizQuestions.length) {
+        showQuestion();
+      } else {
+        endGame();
+      }
+    };
+
+    function endGame() {
+      posterEl.innerHTML = "";
+      questionEl.textContent = "🎉 Quiz Complete!";
+      choicesEl.innerHTML = "";
+      nextBtn.style.display = "none";
+      scoreEl.textContent = `Your score: ${score} / ${quizQuestions.length}`;
+    }
+  </script>
+</body>
+</html>

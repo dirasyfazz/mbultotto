@@ -1,0 +1,232 @@
+/* ---------- Layout Basics ---------- */
+* {
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #ffe3f3, #ffd6ea, #fff0f8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1rem;
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* ---------- Sparkle Animation (optional for background) ---------- */
+@keyframes sparkle {
+  0%, 100% { opacity: 0.8; transform: translateY(0) scale(1); }
+  50% { opacity: 0.3; transform: translateY(-20px) scale(1.2); }
+}
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: sparkle 3s infinite ease-in-out;
+}
+.sparkle:nth-child(1) { top: 15%; left: 10%; animation-delay: 0s; }
+.sparkle:nth-child(2) { top: 40%; left: 25%; animation-delay: 1s; }
+.sparkle:nth-child(3) { top: 60%; left: 75%; animation-delay: 0.5s; }
+.sparkle:nth-child(4) { top: 80%; left: 50%; animation-delay: 1.5s; }
+.sparkle:nth-child(5) { top: 30%; left: 90%; animation-delay: 2s; }
+
+/* ---------- Question Area ---------- */
+#game {
+  background: #ffe8f3;
+  border-radius: 2rem;
+  box-shadow: 0 10px 30px rgba(230, 0, 126, 0.15);
+  max-width: 700px;
+  width: 100%;
+  padding: 2rem 3rem;
+  text-align: center;
+  animation: popIn 0.6s ease;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+h2 {
+  font-size: 2rem;
+  color: #e6007e;
+  margin-bottom: 2rem;
+}
+
+/* ---------- Choice Containers ---------- */
+.choice-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+  width: 100%;
+  border-radius: 1rem;
+  background: #ffd2e8;
+  border: 2px solid #f06ca4;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.choice-container:hover {
+  transform: translateY(-3px);
+  background: #f06ca4;
+  border-color: #e6007e;
+  box-shadow: 0 5px 15px rgba(230, 0, 126, 0.25);
+}
+
+.choice-prefix {
+  padding: 1.2rem 2rem;
+  background-color: #fda1c7;
+  color: #650a2f;
+  font-weight: 600;
+  border-radius: 1rem 0 0 1rem;
+}
+
+.choice-text {
+  flex: 1;
+  padding: 1.2rem 1.5rem;
+  font-size: 1.3rem;
+  text-align: left;
+  color: #2a0e14;
+}
+
+/* ---------- Feedback Colors ---------- */
+.correct {
+  background-color: #f7b4d0 !important;
+  border-color: #e6007e !important;
+  color: #550525;
+}
+
+.incorrect {
+  background-color: #ffb6c9 !important;
+  border-color: #e75df9 !important;
+  color: #a33;
+}
+
+/* ---------- HUD (Score, Progress, Timer) ---------- */
+#hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 700px;
+  margin-bottom: 1rem;
+}
+
+.hud-item {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(230, 0, 126, 0.15);
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  color: #d61c74;
+  font-size: 1.1rem;
+}
+
+#progressBar {
+  height: 1rem;
+  background-color: #ffd6ea;
+  border-radius: 1rem;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+#progressBarFull {
+  height: 100%;
+  width: 0%;
+  background-color: #e6007e;
+  border-radius: 1rem;
+  transition: width 0.3s ease;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  background: #e6007e;
+  color: white;
+  padding: 0.9rem 2rem;
+  border-radius: 1.5rem;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(230, 0, 126, 0.3);
+}
+
+.btn:hover {
+  transform: scale(1.05);
+  background: #bf0065;
+  box-shadow: 0 6px 18px rgba(230, 0, 126, 0.4);
+}
+
+/* ---------- Timer Circle ---------- */
+#timer {
+  width: 70px;
+  height: 70px;
+  border: 6px solid #e6007e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #e6007e;
+  box-shadow: 0 0 12px rgba(230, 0, 126, 0.2);
+}
+
+/* ---------- Game Over Screen ---------- */
+#game-over {
+  text-align: center;
+  animation: fadeIn 1s ease;
+}
+
+#game-over h1 {
+  font-size: 2.5rem;
+  color: #b81c5d;
+  margin-bottom: 1rem;
+}
+
+#game-over button {
+  margin-top: 1rem;
+}
+
+/* ---------- Quiz Option Page ---------- */
+#startPage {
+  text-align: center;
+  margin-top: 8vh;
+  animation: fadeIn 1.2s ease;
+}
+
+.btn-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+#quizOptions {
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+#quizOptions h2 {
+  color: #e6007e;
+  margin-bottom: 1rem;
+}
+
+.small {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
